@@ -4,7 +4,7 @@
 - 👉 [项目由来](https://github.com/zeli624233/Cx2bro/blob/main/%E9%A1%B9%E7%9B%AE%E7%94%B1%E6%9D%A5.md)
 - 👉 [支持的游戏列表](https://github.com/zeli624233/Cx2bro/blob/main/%E6%94%AF%E6%8C%81%E7%9A%84%E6%B8%B8%E6%88%8F.md)
 
-## 首页（解包功能）
+## 首页（三大解包功能）
 ### 前置操作
 加载游戏的 `.exe` 主程序
 
