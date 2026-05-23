@@ -12,7 +12,7 @@
 - 2026: **zeli624233** 基于Plus版本重构,并命名为[Cx2bro](https://github.com/zeli624233/Cx2bro)，添加扩展集系统，静态hash解析支持和跨作规则继承等功能。
 
 ## 特别感谢
-- **YeLikesss** 大佬对CxdecV2基础解包与动态hash提取。
-- **Kinotern** 大佬对原生Key提取模块与批量解包UI的完善。
-- **YuriSizuku** 大佬对cxdecv2加密方式的文章分享。[哈希算法分析_以krkrz_hxv4](https://www.kungal.com/topic/3155)和[狠狠厥烂KiriKiriZ Cxdec拆包](https://linux.do/t/topic/940778)
-- **GPT,Deepseek**对cxdecv2加密逆向分析，压缩算法建议等支持。
+- **YeLikesss** 大佬对**CxdecV2基础解包**与**动态hash提取**。
+- **Kinotern** 大佬对完善**Key提取模块**与**批量解包UI**的完善。
+- **YuriSizuku** 大佬对**cxdecv2加密方式**的文章分享。[哈希算法分析_以krkrz_hxv4](https://www.kungal.com/topic/3155)和[狠狠厥烂KiriKiriZ Cxdec拆包](https://linux.do/t/topic/940778)
+- **GPT,Deepseek**对cxdecv2加密**逆向分析，压缩算法**建议等支持。
