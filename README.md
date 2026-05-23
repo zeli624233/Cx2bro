@@ -15,3 +15,4 @@
 - **YeLikesss** 大佬对CxdecV2逆向工程的开创性贡献
 - **Kinotern** 大佬对原生Key提取模块与批量解包UI的实现
 - **YuriSizuku** 大佬对cxdecv2加密方式的文章分享.[哈希算法分析_以krkrz_hxv4](https://www.kungal.com/topic/3155),[狠狠厥烂KiriKiriZ Cxdec拆包](https://linux.do/t/topic/940778)
+- **GPT,Deepseek等AI**对cxdecv2加密逆向分析，压缩算法建议等支持。
