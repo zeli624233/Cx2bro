@@ -99,7 +99,7 @@
 - 2023：**YeLikesss** 发布 [KrkrExtractForCxdecV2](https://github.com/YeLikesss/KrkrExtractForCxdecV2)，实现CxdecV2基础解包与动态哈希提取
 - 2024：**Kinotern** 发布 [KrkrExtractForCxdecV3.3Extra](https://github.com/Kinotern/KrkrExtractForCxdecV3.3Extra)，新增原生密钥提取与批量解包界面
 - 2026：**zeli624233** 发布 [KrkrExtractForCxdecV3.3Extra_Plus](https://github.com/zeli624233/KrkrExtractForCxdecV3.3Extra_Plus)，新增哈希文件名还原能力
-- 2026：**zeli624233** 基于Plus版本整体重构，定名 [Cx2bro](https://github.com/zeli624233/Cx2bro)，新增扩展集系统、静态哈希解析、跨厂商规则复用等功能
+- 2026：**zeli624233** 基于Plus版本整体重构，定名 [Cx2bro](https://github.com/zeli624233/Cx2bro)，新增扩展集系统、静态哈希解析等功能
 
 ### 特别感谢
 - **YeLikesss**：CxdecV2基础解包与动态哈希技术奠基
