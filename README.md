@@ -2,7 +2,7 @@
 本项目适用于krkrz 引擎，CxdecV2 (hxv4) 加密方式的 Galgame 开源解包项目。支持多种解包模式，还可制作并分享本游戏的Cx2bro扩展集，Cx2bro扩展集库越丰富，一键解包的通用性越强。
 ## 声明
 本项目基于 [KrkrExtractForCxdecV3.3Extra_Plus](https://github.com/zeli624233/KrkrExtractForCxdecV3.3Extra_Plus) 重构开发。
-本项目使用 **GNU Affero General Public License v3.0** 许可证开源，与所有上游项目保持一致。
+本项目使用 **AGPL-3.0 license** 许可证开源，与所有上游项目保持一致。
 
 ## 项目历史
 
