@@ -1,6 +1,6 @@
 # Cx2bro
 适用于 krkrz 引擎、CxdecV2 (hxv4) 加密方式的 Galgame 解包工具。支持多种解包模式，可制作并分享游戏的 Cx2bro 扩展集。**扩展集库越丰富，一键解包的通用性越强**。
-如果你喜欢的Gal是采用krkrz 引擎、2022年底发售的游戏，那么本项目可能会帮到你！
+- 如果你喜欢的Gal是采用krkrz 引擎、2022年12月底发售的游戏，那么本项目可能会帮到你！
 
 - 👉 [项目由来](https://github.com/zeli624233/Cx2bro/blob/main/%E9%A1%B9%E7%9B%AE%E7%94%B1%E6%9D%A5.md)
 - 👉 [支持的游戏列表](https://github.com/zeli624233/Cx2bro-Extensions/tree/main)
