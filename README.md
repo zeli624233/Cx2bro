@@ -2,6 +2,20 @@
 适用于krkrz 引擎，CxdecV2 (hxv4) 加密方式的 Galgame 解包工具。支持多种解包模式，还可制作并分享本游戏的Cx2bro扩展集，Cx2bro扩展集库越丰富，一键解包的通用性越强。 
 - 👉[项目由来](https://github.com/zeli624233/Cx2bro/blob/main/项目由来.md)
 - 👉[支持的游戏扩展集](https://github.com/zeli624233/Cx2bro/blob/main/支持的游戏.md)
+# 解包部分
+## 首页
+### 1.该作扩展集提取
+### 2.该会社集合撞新作
+### 3.传统动态模式
+
+# 制作扩展集
+
+
+# 扩展集
+
+# 关于
+
+
 ## 声明
 本项目基于 [KrkrExtractForCxdecV3.3Extra_Plus](https://github.com/zeli624233/KrkrExtractForCxdecV3.3Extra_Plus) 重构开发。
 本项目使用 **AGPL-3.0 license** 许可证开源，与所有上游项目保持一致。
