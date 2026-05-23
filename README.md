@@ -93,7 +93,7 @@
 ## 关于
 页面包含软件版本、作者信息、开源鸣谢、许可证协议与使用帮助入口。
 
-## 开源声明
+## AGPL-3.0 协议
 本项目基于 [KrkrExtractForCxdecV3.3Extra_Plus](https://github.com/zeli624233/KrkrExtractForCxdecV3.3Extra_Plus) 重构开发，
 遵循 **GNU AGPL-3.0** 开源协议，与上游项目许可证保持统一。
 
