@@ -6,7 +6,7 @@
 
 ## 项目历史
 
-- 2023: **YeLikesss** 发布原始 **KrkrExtractForCxdecV2**，实现CxdecV2基础解包与动态hash提取。[KrkrExtractForCxdecV2](https://github.com/YeLikesss/KrkrExtractForCxdecV2)
+- 2023: **YeLikesss** 发布原始 **KrkrExtractForCxdecV2**，实现CxdecV2基础解包与动态hash提取.[KrkrExtractForCxdecV2](https://github.com/YeLikesss/KrkrExtractForCxdecV2)
 - 2024: **Kinotern** 发布 **V3.3Extra** 版本，添加原生Key提取和批量解包UI。[KrkrExtractForCxdecV3.3Extra](https://github.com/Kinotern/KrkrExtractForCxdecV3.3Extra)
 - 2026: **zeli624233** 发布 **V3.3Extra_Plus** 版本，添加hash文件名还原功能[KrkrExtractForCxdecV3.3Extra_Plus]。(https://github.com/Kinotern/KrkrExtractForCxdecV3.3Extra)
 - 2026: **zeli624233** 基于Plus版本重构,并命名为**Cx2bro**，添加扩展集系统，静态hash解析和跨作规则继承等功能。[Cx2bro](https://github.com/zeli624233/Cx2bro)
