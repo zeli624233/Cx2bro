@@ -1,0 +1,27 @@
+﻿CXDEC-MANIFEST-INT	1
+[Meta]
+Brand=Purple
+Game=リップリップル
+HashSeed=xp3hnp
+Format=manifest.int
+PackageMode=int-rules-lz
+ResourcePaths=13647
+Summary=这是第3个拓展集
+Contributor=ユイ可愛ね
+Author=ユイ可愛ね
+Version=DL
+Date=2026-05-22
+
+[Validation]
+Passed = yes
+TotalFiles = 15199
+RestoredFiles = 13647
+SuccessRate = 89.79%
+PackageBytes = 20498
+PackageSizeKB = 20.0
+PackageLimitBytes = 131072
+BaselineRestoredFiles = 13647
+BaselineThresholdFiles = 10236
+BaselinePassRatio = 0.75
+PassBasis = 包体 20.0 KB / 上限 128 KB：通过；成功还原 13647 / 门槛 10236（基线 13647 的 75%）：通过。
+Error = 

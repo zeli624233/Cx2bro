@@ -1,0 +1,12 @@
+===== CxdecV2ExtractorWorkbench startup log =====
+Date: 2026/05/22 ÷‹ŒÂ 10:49:17.54
+WorkDir: E:\workbench\gpt5\CxdecV2ExtractorWorkbench_home_step_feedback_fixed\Source\CxdecV2ExtractorWorkbench
+
+[INFO] Python command: py -3
+Python 3.13.3
+[INFO] Checking PySide6...
+6.11.1
+[INFO] Running syntax check...
+[INFO] Starting GUI...
+
+[INFO] Program exited with code 0.
