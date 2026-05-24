@@ -1,6 +1,0 @@
-Run RUN_SOURCE.bat to start the source version.
-If it fails, run RUN_DEBUG.bat and send startup_error_log.txt.
-
-This package keeps the original top tab style:
-Home / Extension Maker / Extensions / About.
-Clicking About opens the About dialog.

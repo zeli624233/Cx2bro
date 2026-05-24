@@ -1,9 +1,0 @@
-﻿CXDEC-MANIFEST-INT	1
-[Meta]
-Brand=Orthros
-Game=ツヴァイトリガー
-HashSeed=xp3hnp
-Format=manifest.int
-PackageMode=minimal-voice-rules
-ResourcePaths=13779
-Summary=自动生成的新版 int 扩展集，规则优先，例外路径使用前缀压缩保存。
