@@ -1,0 +1,27 @@
+﻿CXDEC-MANIFEST-INT	1
+[Meta]
+Game=オトメ世界の歩き方
+HashSeed=xp3hnp
+Format=manifest.int
+PackageMode=minimal-voice-rules
+ResourcePaths=16686
+Summary=第1个扩展集
+Brand=Orthros
+Contributor=ユイ可愛ね
+Author=ユイ可愛ね
+Version=1.0
+Date=2026-05-24
+
+[Validation]
+Passed = yes
+TotalFiles = 18216
+RestoredFiles = 16772
+SuccessRate = 92.07%
+PackageBytes = 12375
+PackageSizeKB = 12.1
+PackageLimitBytes = 40960
+BaselineRestoredFiles = 16686
+BaselineThresholdFiles = 12515
+BaselinePassRatio = 0.75
+PassBasis = 包体 12.1 KB / 上限 40 KB：通过；成功还原 16772 / 门槛 12515（基线 16686 的 75%）：通过。
+Error = 
