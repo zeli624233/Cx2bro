@@ -21,12 +21,9 @@
 
 - 👉 [支持游戏列表(Cx2bro扩展集)](https://github.com/zeli624233/Cx2bro-extensions)（不定期更新！欢迎提交 Pull Request！）
 - 👉 项目原理：[父模块](docs/parent-module.md) | [子模块](docs/child-module.md)
-
----
-
 ## 支持一下
-
-如果 Cx2bro 确实帮到了你，麻烦给本项目一个 ⭐Star 吧！这是对开发者最好的赞誉！
+- 如果 Cx2bro 确实帮到了你，麻烦给本项目一个 ⭐Star 吧！这是对开发者最好的赞誉！
+---
 ## 快速上手：
 ### 前置操作
 加载游戏 .exe 主程序。
@@ -52,6 +49,7 @@
 ### 5. 管理功能
 - 统计扩展集总量与信息
 - 在线更新、资源管理、快速跳转
+---
 ## AGPL-3.0 License
 本项目基于 KrkrExtractForCxdecV3.3Extra_Plus 重构开发， 遵循 GNU AGPL-3.0 开源协议，与上游项目许可证保持统一。
 ## 项目历史
