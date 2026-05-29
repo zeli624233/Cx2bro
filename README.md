@@ -2,10 +2,10 @@
 
 # Cx2bro
 
-![version](https://img.shields.io/badge/version-v1.0.0-blue?style=flat-square&labelColor=333333)
-
-![license](https://img.shields.io/badge/license-AGPL--3.0-orange?style=flat-square)
-![status](https://img.shields.io/badge/status-release-green?style=flat-square)
+<img src="https://img.shields.io/badge/version-v1.0.0-007ec6?style=flat-square&labelColor=222222" alt="version">
+<img src="https://img.shields.io/badge/platform-Windows-007ec6?style=flat-square&labelColor=222222" alt="platform">
+<img src="https://img.shields.io/badge/license-AGPL--3.0-d93f0b?style=flat-square&labelColor=222222" alt="license">
+<img src="https://img.shields.io/badge/status-release-28a745?style=flat-square&labelColor=222222" alt="status">
 
 </div>
 
