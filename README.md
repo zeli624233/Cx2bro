@@ -1,13 +1,9 @@
-<div align="center">
-
 # Cx2bro
 
-<img src="https://img.shields.io/badge/version-v1.0.0-007ec6?style=flat-square&labelColor=222222" alt="version">
-<img src="https://img.shields.io/badge/platform-Windows-007ec6?style=flat-square&labelColor=222222" alt="platform">
-<img src="https://img.shields.io/badge/license-AGPL--3.0-d93f0b?style=flat-square&labelColor=222222" alt="license">
-<img src="https://img.shields.io/badge/status-release-28a745?style=flat-square&labelColor=222222" alt="status">
-
-</div>
+[![Version](https://img.shields.io/github/v/release/zeli624233/Cx2bro?color=blue&label=version)](https://github.com/zeli624233/Cx2bro/releases)
+[![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](https://github.com/zeli624233/Cx2bro/releases)
+[![License](https://img.shields.io/badge/license-AGPL--3.0-orange.svg)](https://github.com/zeli624233/Cx2bro/blob/main/LICENSE)
+[![Size](https://img.shields.io/badge/size-%3C40KB-lightgrey.svg)](https://github.com/zeli624233/Cx2bro/releases/latest)
 
 适用于 krkrz 引擎、CxdecV2 (hxv4) 加密方式的 Galgame 解包工具。支持多种解包模式，可制作并分享游戏的 Cx2bro 扩展集，不到40KB占用，即可解包你喜欢的游戏，快来试一下！
 
@@ -20,8 +16,8 @@
 
 ## 资产
 
-👉 支持游戏列表(Cx2bro扩展集)（不定期更新！欢迎提交 Pull Request！）
-👉 项目原理：父模块，子模块
+👉 [支持游戏列表(Cx2bro扩展集)](https://github.com/zeli624233/Cx2bro-extensions)（不定期更新！欢迎提交 Pull Request！）
+👉 项目原理：[父模块](docs/parent-module.md) | [子模块](docs/child-module.md)
 
 ---
 
