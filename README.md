@@ -1,6 +1,6 @@
 <div align="center">
 
-# ![image](https://github.com/zeli624233/Cx2bro/blob/main/logo.gif)
+# ![image](https://github.com/zeli624233/Cx2bro/blob/main/logo.png)
 ![version](https://img.shields.io/badge/version-v1.2.0-007ec6?labelColor=333333)
 ![platform](https://img.shields.io/badge/platform-Windows-007ec6?labelColor=333333&logo=windows&logoColor=white)
 ![license](https://img.shields.io/badge/license-AGPL--3.0-d93f0b?labelColor=333333)
