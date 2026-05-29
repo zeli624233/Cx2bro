@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/license-AGPL--3.0-orange.svg)](https://github.com/zeli624233/Cx2bro/blob/main/LICENSE)
 [![Size](https://img.shields.io/badge/size-%3C40KB-lightgrey.svg)](https://github.com/zeli624233/Cx2bro/releases/latest)
 
-适用于 krkrz 引擎、CxdecV2 (hxv4) 加密方式的 Galgame 解包工具。支持多种解包模式，可制作并分享游戏的 Cx2bro 扩展集，不到40KB占用，即可解包你喜欢的游戏，快来试一下！
+适用于 krkrz 引擎、CxdecV2 (hxv4) 加密方式的 Galgame 解包工具。支持多种解包模式，可制作并分享游戏的 Cx2bro 扩展集，不到40KB占用，即可解包你喜欢的游戏！
 
 ## 靓点
 
