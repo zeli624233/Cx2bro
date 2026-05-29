@@ -20,7 +20,6 @@
 ## 资产
 
 - 👉 [支持游戏列表(Cx2bro扩展集)](https://github.com/zeli624233/Cx2bro-extensions)（不定期更新！欢迎提交 Pull Request！）
-- 👉 项目原理：
 ## ⭐支持一下！
 - 如果 Cx2bro 确实帮到了你，麻烦给本项目一个 ⭐Star 吧！这是对开发者最好的赞誉！
 ---
