@@ -52,7 +52,8 @@ rule.int：哈希运算与解密数据（禁止用记事本编辑）
 可用性测试、资源管理、快速跳转
 💡 社区寄语
 扩展集无法自动生成，需要玩家手动维护。如果你成功解包了某款游戏，花两分钟制作扩展集，既能自用一键解包，也能分享帮助更多同好。
-
+## AGPL-3.0 License
+本项目基于 KrkrExtractForCxdecV3.3Extra_Plus 重构开发， 遵循 GNU AGPL-3.0 开源协议，与上游项目许可证保持统一。
 ## 项目历史
 
 - 2023：YeLikesss 发布 KrkrExtractForCxdecV2，实现CxdecV2基础解包与动态哈希提取
