@@ -12,10 +12,10 @@
 
 ## 靓点
 
-- 该作扩展集提取：一键解包已收录游戏，无需动态采集
-- 该会社合集撞新作：利用同会社扩展集规则，解包未收录新作
-- 传统动态模式：DLL注入捕获文件名与哈希，制作专属扩展集
-- 扩展集社区生态：可制作、分享、复用扩展集，降低重复采集成本
+- 该作扩展集提取：一键解包已收录游戏，无需动态采集。
+- 该会社合集撞新作：利用同会社扩展集规则，解包未收录新作。
+- 传统动态模式：DLL注入捕获文件名与哈希，制作专属扩展集。
+- 扩展集社区生态：可制作、分享、复用扩展集，降低重复采集成本。
 
 ## 资产
 
@@ -47,21 +47,21 @@
 - manifest.int：厂商、游戏、作者等信息。
 - rule.int：哈希运算与解密数据。
 ### 5. 管理功能
-- 统计扩展集总量与信息
-- 在线更新、资源管理、快速跳转
+- 统计扩展集总量与信息。
+- 在线更新、资源管理、快速跳转。
 ---
 ## AGPL-3.0 License
 本项目基于 KrkrExtractForCxdecV3.3Extra_Plus 重构开发， 遵循 GNU AGPL-3.0 开源协议，与上游项目许可证保持统一。
 ## 项目历史
 
-- 2023：YeLikesss 发布 KrkrExtractForCxdecV2，实现CxdecV2基础解包与动态哈希提取
-- 2024：Kinotern 发布 KrkrExtractForCxdecV3.3Extra，新增原生密钥提取与批量解包界面
-- 2026：zeli624233 发布 KrkrExtractForCxdecV3.3Extra_Plus，新增哈希文件名还原能力
-- 2026：zeli624233 基于Plus版本整体重构，定名 Cx2bro，新增扩展集系统、静态哈希解析等功能
+- 2023：YeLikesss 发布 KrkrExtractForCxdecV2，实现CxdecV2基础解包与动态哈希提取。
+- 2024：Kinotern 发布 KrkrExtractForCxdecV3.3Extra，新增原生密钥提取与批量解包界面。
+- 2026：zeli624233 发布 KrkrExtractForCxdecV3.3Extra_Plus，新增哈希文件名还原能力。
+- 2026：zeli624233 基于Plus版本整体重构，定名 Cx2bro，新增扩展集系统、静态哈希解析等功能。
 
 ## 特别感谢
 
-- YeLikesss：CxdecV2基础解包与动态哈希技术奠基
-- Kinotern：密钥提取模块、批量解包界面优化完善
-- YuriSizuku：CxdecV2加密原理、哈希算法相关技术文章分享
-- GPT、Deepseek：提供加密逆向思路与压缩算法优化建议
+- YeLikesss：CxdecV2基础解包与动态哈希技术奠基。
+- Kinotern：密钥提取模块、批量解包界面优化完善。
+- YuriSizuku：CxdecV2加密原理、哈希算法相关技术文章分享。
+- GPT、Deepseek：提供加密逆向思路与压缩算法优化建议。
