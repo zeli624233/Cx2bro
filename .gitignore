@@ -1,0 +1,54 @@
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.spec
+
+# --- C++ 构建中间产物（各项目 Release/ 内） ---
+**/Release/*.obj
+**/Release/*.pdb
+**/Release/*.tlog/
+**/Release/*.iobj
+**/Release/*.ipdb
+**/Release/*.recipe
+**/Release/*.lastbuildstate
+**/Release/*.unsuccessfulbuild
+**/Release/*.FileListAbsolute.txt
+**/Release/*.res
+**/Release/*.exp
+**/Release/*.lib
+**/Release/*.ilk
+**/Release/*.manifest
+**/Release/vc143.pdb
+
+# Debug 产物
+Debug/
+*.user
+*.suo
+*.sdf
+*.VC.db
+*.VC.opendb
+*.aps
+
+# --- 临时 / 备份 ---
+*.bak
+*.7z
+*.log
+startup_error_log.txt
+Thumbs.db
+.DS_Store
+
+# --- IDE ---
+.vs/
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# --- 发布路径（外部输出） ---
+new/
+编译版本/

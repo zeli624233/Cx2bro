@@ -1,0 +1,123 @@
+#pragma code_page(65001)
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "winres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// 中文(简体，中国) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include \"\"winres.h\"\"\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_MainIcon            ICON                    "AmetoYuki_1.ico"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_MainForm DIALOGEX 0, 0, 261, 176
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "CxdecExtractorLoader"
+FONT 9, "微软雅黑", 400, 0, 0x86
+BEGIN
+    PUSHBUTTON      "加载解包模块",IDC_Extractor,76,17,109,14,NOT WS_TABSTOP
+    PUSHBUTTON      "加载字符串Hash提取模块",IDC_StringDumper,76,42,109,14,NOT WS_TABSTOP
+    PUSHBUTTON      "加载Key提取模块",IDC_KeyDumper,76,67,109,14,NOT WS_TABSTOP
+    PUSHBUTTON      "还原资源文件名",IDC_RestoreExtractorOutput,76,92,109,14,NOT WS_TABSTOP
+    PUSHBUTTON      "静态生成Hash映射",IDC_StaticHashGenerator,76,117,109,14,NOT WS_TABSTOP
+    LTEXT           "提取进度",IDC_KeyProgressLabel,25,144,40,10
+    CONTROL         "",IDC_KeyProgress,"msctls_progress32",WS_BORDER | WS_TABSTOP,25,157,180,12
+    LTEXT           "0%",IDC_KeyProgressText,214,145,20,10
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_MainForm, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 254
+        VERTGUIDE, 76
+        VERTGUIDE, 185
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 169
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_MainForm AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+#endif    // 中文(简体，中国) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED

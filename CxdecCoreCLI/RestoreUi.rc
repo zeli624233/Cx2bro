@@ -1,0 +1,46 @@
+// Microsoft Visual C++ generated resource script.
+//
+#pragma code_page(65001)
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "winres.h"
+#include <commctrl.h>
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Chinese (Simplified, PRC) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+
+IDD_RESTORE_UI DIALOGEX 0, 0, 420, 316
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX
+CAPTION "Cxdec 资源名还原"
+FONT 9, "Microsoft YaHei UI", 400, 0, 0x86
+BEGIN
+    LTEXT           "还原输出目录",IDC_RESTORE_HINT,7,7,48,10
+    EDITTEXT        IDC_RESTORE_OUTPUT,58,5,298,14,ES_AUTOHSCROLL | ES_READONLY
+    LTEXT           "工作线程: 1",IDC_RESTORE_WORKERINFO,360,7,53,10
+    CONTROL         "",IDC_RESTORE_PROGRESS,PROGRESS_CLASS,WS_BORDER | WS_TABSTOP,7,24,406,12
+    LTEXT           "总任务 0 | 运行中 0 | 排队 0 | 完成 0 | 失败 0",IDC_RESTORE_STATUS,7,40,406,10
+    LTEXT           "详细日志",IDC_STATIC,7,54,48,10
+    EDITTEXT        IDC_RESTORE_LOG,7,66,406,134,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_VSCROLL
+    LTEXT           "任务概览",IDC_STATIC,7,206,48,10
+    CONTROL         "",IDC_RESTORE_TASKLIST,"SysListView32",LVS_REPORT | LVS_SHOWSELALWAYS | WS_BORDER | WS_TABSTOP,7,218,406,50
+    AUTOCHECKBOX    "保留未还原文件名的文件（目录，扩展集已确定）",IDC_RESTORE_FALLBACK,7,274,215,14
+    AUTOCHECKBOX    "推理补充还原（分析已还原文件名推测未还原文件原名）",IDC_RESTORE_INFERENCE,7,290,215,14
+    PUSHBUTTON      "开始",IDC_RESTORE_START,227,290,36,14
+    PUSHBUTTON      "打开还原目录",IDC_RESTORE_OPEN,303,290,52,14
+    PUSHBUTTON      "返回主程序",IDC_RESTORE_BACK,360,290,53,14
+END
+
+IDI_APPICON ICON "..\\CxdecExtractorLoader\\AmetoYuki_1.ico"
+
+#endif
