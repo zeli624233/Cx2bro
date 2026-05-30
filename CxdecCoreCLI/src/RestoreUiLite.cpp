@@ -127,7 +127,7 @@ namespace
     void ActivateWorkbenchWindow()
     {
         // 先精确匹配
-        HWND workbench = ::FindWindowW(nullptr, L"Cx2bro v1.2.0");
+        HWND workbench = ::FindWindowW(nullptr, L"Cx2bro v1.3.0");
         if (!workbench)
         {
             workbench = ::FindWindowW(nullptr, L"Cx2bro");
@@ -545,7 +545,7 @@ namespace
                         detail += L"缺少文件名 Hash: " + std::to_wstring(finish->result.missingFileNameHash) + L"\r\n";
                         detail += L"复制失败: " + std::to_wstring(finish->result.copyFailed) + L"\r\n";
                         if (finish->result.fallbackRestoredFiles > 0)
-                            detail += L"Fallback 保留: " + std::to_wstring(finish->result.fallbackRestoredFiles) + L"\r\n";
+                            detail += L"按后缀名保留（未匹配到文件名）: " + std::to_wstring(finish->result.fallbackRestoredFiles) + L"\r\n";
                         if (inferenceCount > 0)
                         {
                             detail += L"\r\n━━━ 推理补充还原 ━━━\r\n";

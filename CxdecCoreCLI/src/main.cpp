@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -15,7 +16,7 @@
 
 namespace
 {
-    constexpr const wchar_t AppVersion[] = L"v1.0.0";
+    constexpr const wchar_t AppVersion[] = L"v1.3.0";
 
     struct Options
     {
@@ -134,6 +135,44 @@ namespace
         CreateDirectoryW(path.c_str(), nullptr);
     }
 
+    // 从 Restored_Extractor_Output 收集已知文件名，预置到 Hash 表
+    // 这些文件名会被 staticHashGenerator.SetKnownFileNames() 使用，
+    // 保证在 Pattern 展开前就写入 Hash 表，避免 cap 浪费。
+    std::set<std::wstring> CollectRestoredFilenames(const std::wstring& workspace)
+    {
+        std::set<std::wstring> names;
+        std::wstring restoredRoot = Combine(workspace, L"Restored_Extractor_Output");
+        DWORD attr = GetFileAttributesW(restoredRoot.c_str());
+        if (attr == INVALID_FILE_ATTRIBUTES || (attr & FILE_ATTRIBUTE_DIRECTORY) == 0)
+            return names;
+
+        WIN32_FIND_DATAW pkgData{};
+        HANDLE pkgFind = FindFirstFileW(Combine(restoredRoot, L"*").c_str(), &pkgData);
+        if (pkgFind == INVALID_HANDLE_VALUE) return names;
+
+        do
+        {
+            if (wcscmp(pkgData.cFileName, L".") == 0 || wcscmp(pkgData.cFileName, L"..") == 0) continue;
+            if ((pkgData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0) continue;
+
+            std::wstring pkgDir = Combine(restoredRoot, pkgData.cFileName);
+            WIN32_FIND_DATAW fileData{};
+            HANDLE fileFind = FindFirstFileW(Combine(pkgDir, L"*").c_str(), &fileData);
+            if (fileFind == INVALID_HANDLE_VALUE) continue;
+
+            do
+            {
+                if (wcscmp(fileData.cFileName, L".") == 0 || wcscmp(fileData.cFileName, L"..") == 0) continue;
+                if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) continue;
+                names.insert(fileData.cFileName);
+            } while (FindNextFileW(fileFind, &fileData));
+            FindClose(fileFind);
+        } while (FindNextFileW(pkgFind, &pkgData));
+        FindClose(pkgFind);
+
+        return names;
+    }
+
     bool ParseArgs(int argc, wchar_t** argv, Options& options)
     {
         for (int i = 1; i < argc; ++i)
@@ -247,6 +286,17 @@ namespace
             StaticHashGeneratorLite::Result result{};
             std::wstring errorMessage;
             std::wstring outputDirectory = Combine(root, L"StaticHash_Output");
+
+            // 从已有的还原结果收集已知文件名，预置到 Hash 表
+            // 与扩展集验证器（PublisherTestUiLite）一致的做法，
+            // 保证扩展集标注的解包率（96%+）能直接达成。
+            auto knownNames = CollectRestoredFilenames(root);
+            if (!knownNames.empty())
+            {
+                generator.SetKnownFileNames(knownNames);
+                PrintLine(L"KNOWN_FILENAMES: " + std::to_wstring((unsigned int)knownNames.size()));
+            }
+
             if (!generator.GenerateFromExtension(options.extension, outputDirectory, result, errorMessage))
             {
                 PrintLine(L"ERROR: " + errorMessage);
@@ -272,6 +322,15 @@ namespace
             StaticHashGeneratorLite::Result result{};
             std::wstring errorMessage;
             std::wstring outputDirectory = Combine(root, L"StaticHash_Output");
+
+            // 同样从已有还原结果收集已知文件名
+            auto knownNames = CollectRestoredFilenames(root);
+            if (!knownNames.empty())
+            {
+                generator.SetKnownFileNames(knownNames);
+                PrintLine(L"KNOWN_FILENAMES: " + std::to_wstring((unsigned int)knownNames.size()));
+            }
+
             if (!generator.GenerateFromBrand(extensionsRoot, options.brand, outputDirectory, result, errorMessage))
             {
                 PrintLine(L"ERROR: " + errorMessage);

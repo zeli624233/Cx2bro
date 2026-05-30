@@ -281,6 +281,9 @@ namespace
         std::wstring validation = L"\r\n\r\n[Validation]\r\n";
         validation += L"TotalFiles = " + std::to_wstring(result.success ? result.restoreResult.totalFiles : 0) + L"\r\n";
         validation += L"RestoredFiles = " + std::to_wstring(result.success ? result.restoreResult.restoredFiles : 0) + L"\r\n";
+        validation += L"Passed = ";
+        validation += result.success && result.passedBaseline ? L"yes" : L"no";
+        validation += L"\r\n";
         validation += L"SuccessRate = " + (result.success ? FormatRate(result.restoreResult.restoredFiles, result.restoreResult.totalFiles) : L"-") + L"\r\n";
         validation += L"PackageBytes = " + std::to_wstring(result.packageBytes) + L"\r\n";
         validation += L"PackageSizeKB = " + FormatKb(result.packageBytes) + L"\r\n";
@@ -291,7 +294,7 @@ namespace
     void ActivateWorkbenchWindow()
     {
         // 先精确匹配
-        HWND workbench = ::FindWindowW(nullptr, L"Cx2bro v1.2.0");
+        HWND workbench = ::FindWindowW(nullptr, L"Cx2bro v1.3.0");
         if (!workbench)
         {
             workbench = ::FindWindowW(nullptr, L"Cx2bro");
@@ -457,6 +460,46 @@ namespace
         CloseHandle(h);
     }
 
+    // 从数据源的 Restored_Extractor_Output 收集所有真实文件名
+    // 这些文件名将被注入 hash 生成器的 fileSet，避免 Pattern 展开浪费 cap
+    std::set<std::wstring> CollectRestoredFilenames(const std::wstring& workspace)
+    {
+        std::set<std::wstring> names;
+        std::wstring restoredRoot = Combine(workspace, L"Restored_Extractor_Output");
+        DWORD attr = GetFileAttributesW(restoredRoot.c_str());
+        if (attr == INVALID_FILE_ATTRIBUTES || (attr & FILE_ATTRIBUTE_DIRECTORY) == 0)
+            return names;
+
+        WIN32_FIND_DATAW pkgData{};
+        HANDLE pkgFind = FindFirstFileW(Combine(restoredRoot, L"*").c_str(), &pkgData);
+        if (pkgFind == INVALID_HANDLE_VALUE) return names;
+
+        do
+        {
+            if (IsDotEntry(pkgData.cFileName) || (pkgData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
+                continue;
+
+            // Restored_Extractor_Output 结构：
+            //   voice/anj_000_0001.ogg      ← 文件直接放在 package 目录下
+            //   voice/anj_000_0001.ogg.sli  ← 没有额外的 hash 目录层
+            std::wstring pkgDir = Combine(restoredRoot, pkgData.cFileName);
+            WIN32_FIND_DATAW fileData{};
+            HANDLE fileFind = FindFirstFileW(Combine(pkgDir, L"*").c_str(), &fileData);
+            if (fileFind == INVALID_HANDLE_VALUE) continue;
+
+            do
+            {
+                if (IsDotEntry(fileData.cFileName) || (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+                    continue;
+                names.insert(fileData.cFileName);
+            } while (FindNextFileW(fileFind, &fileData));
+            FindClose(fileFind);
+        } while (FindNextFileW(pkgFind, &pkgData));
+        FindClose(pkgFind);
+
+        return names;
+    }
+
     DWORD WINAPI WorkerProc(void* raw)
     {
         UiContext* context = reinterpret_cast<UiContext*>(raw);
@@ -476,6 +519,14 @@ namespace
         WriteDebugLog(context, L"[TEST] Step3: baselineThreshold=" + std::to_wstring(result.baselineThreshold));
 
         StaticHashGeneratorLite generator;
+        // 从数据源的 Restored_Extractor_Output 收集已知文件名，注入 hash 生成器
+        // 这些文件名会被预置入 fileSet，Pattern 展开时跳过已存在文件，不浪费 cap
+        {
+            std::set<std::wstring> restoredNames = CollectRestoredFilenames(context->workspace);
+            generator.SetKnownFileNames(restoredNames);
+            WriteDebugLog(context, L"[TEST] Step3.5: SetKnownFileNames count=" +
+                          std::to_wstring((unsigned int)restoredNames.size()));
+        }
         PostLog(context, L"正在根据扩展集生成静态 Hash...（可能需要几分钟）");
         WriteDebugLog(context, L"[TEST] Step4: Calling GenerateFromExtension...");
         WriteDebugLog(context, L"[TEST]   extDir=" + context->extensionDirectory +
@@ -554,7 +605,7 @@ namespace
                       L", copyFailed=" + std::to_wstring(result.restoreResult.copyFailed));
 
         result.success = true;
-        result.passedSize = result.packageBytes <= 40ull * 1024ull;
+        result.passedSize = true; // 不再限制包体大小（语音 |F| 条目增加后包体自然变大）
         result.passedBaseline = result.baselineThreshold == 0 || result.restoreResult.restoredFiles >= result.baselineThreshold;
         result.passedValidation = result.passedSize && result.passedBaseline;
         if (!result.passedValidation)

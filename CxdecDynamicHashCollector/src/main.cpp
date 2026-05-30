@@ -1589,7 +1589,7 @@ void OnCommand(HWND hwnd, WPARAM wParam, CollectorContext& ctx)
             }
 
             // 尝试激活 Python 主窗口（全名匹配 + 前缀回退）
-            HWND hPythonWnd = FindWindowW(nullptr, L"Cx2bro v1.2.0");
+            HWND hPythonWnd = FindWindowW(nullptr, L"Cx2bro v1.3.0");
             if (!hPythonWnd)
                 hPythonWnd = FindWindowW(nullptr, L"Cx2bro");
             if (!hPythonWnd)

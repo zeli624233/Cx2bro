@@ -309,6 +309,8 @@ namespace
     {
         NotifyRestoreProgress(progressCallback, progressContext, task.packageName, RestoreUiTaskState::Restoring, 0u, task.estimatedFiles, L"开始还原");
 
+        std::set<std::wstring> processedFallbackDirs; // 已处理过的 hash 目录，避免重复计数
+
         WIN32_FIND_DATAW directoryData{};
         HANDLE directoryFind = FindFirstFileW(Combine(task.packageDirectory, L"*").c_str(), &directoryData);
         if (directoryFind == INVALID_HANDLE_VALUE)
@@ -352,29 +354,33 @@ namespace
                     ++result.missingDirectoryHash;
                     if (enableFallback) {
                         // Directory hash unknown — place files in hash-named dir under the package
-                        std::wstring pkgOutput = Combine(outputRoot, task.packageName);
-                        EnsureDirectory(pkgOutput);
-                        std::wstring dstDir = Combine(pkgOutput, directoryData.cFileName);
-                        EnsureDirectory(dstDir);
-                        WIN32_FIND_DATAW fbfd;
-                        HANDLE fbf = FindFirstFileW(Combine(hashDirectory, L"*").c_str(), &fbfd);
-                        if (fbf != INVALID_HANDLE_VALUE) {
-                            do {
-                                if (!IsDotEntry(fbfd.cFileName) && (fbfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
-                                    std::wstring srcPath = Combine(hashDirectory, fbfd.cFileName);
-                                    // Detect extension and append it
-                                    std::wstring ext = DetectExtension(srcPath);
-                                    std::wstring dstName = fbfd.cFileName + ext;
-                                    std::wstring dstPath = Combine(dstDir, dstName);
-                                    if (CopyFileW(srcPath.c_str(), dstPath.c_str(), FALSE)) {
-                                        ++result.fallbackRestoredFiles;
+                        // 同一个 hash 目录只复制一次，避免嵌套循环重复计数
+                        if (processedFallbackDirs.find(directoryData.cFileName) == processedFallbackDirs.end())
+                        {
+                            processedFallbackDirs.insert(directoryData.cFileName);
+                            std::wstring pkgOutput = Combine(outputRoot, task.packageName);
+                            EnsureDirectory(pkgOutput);
+                            std::wstring dstDir = Combine(pkgOutput, directoryData.cFileName);
+                            EnsureDirectory(dstDir);
+                            WIN32_FIND_DATAW fbfd;
+                            HANDLE fbf = FindFirstFileW(Combine(hashDirectory, L"*").c_str(), &fbfd);
+                            if (fbf != INVALID_HANDLE_VALUE) {
+                                do {
+                                    if (!IsDotEntry(fbfd.cFileName) && (fbfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
+                                        std::wstring srcPath = Combine(hashDirectory, fbfd.cFileName);
+                                        std::wstring ext = DetectExtension(srcPath);
+                                        std::wstring dstName = fbfd.cFileName + ext;
+                                        std::wstring dstPath = Combine(dstDir, dstName);
+                                        if (CopyFileW(srcPath.c_str(), dstPath.c_str(), FALSE)) {
+                                            ++result.fallbackRestoredFiles;
+                                        }
                                     }
-                                }
-                            } while (FindNextFileW(fbf, &fbfd));
-                            FindClose(fbf);
+                                } while (FindNextFileW(fbf, &fbfd));
+                                FindClose(fbf);
+                            }
                         }
                     }
-                    detail = L"缺少目录 Hash: " + directoryHash;
+                    detail = L"目录未知，按后缀保留到 " + std::wstring(directoryData.cFileName);
                     NotifyRestoreProgress(progressCallback, progressContext, task.packageName, RestoreUiTaskState::Restoring, processed, task.estimatedFiles, detail);
                     continue;
                 }
@@ -396,7 +402,7 @@ namespace
                             ++result.fallbackRestoredFiles;
                         }
                     }
-                    detail = L"缺少文件名 Hash: " + fileHash;
+                    detail = L"文件名未知，按后缀保留到 " + directoryIt->second + L"\\" + std::wstring(fileData.cFileName);
                     NotifyRestoreProgress(progressCallback, progressContext, task.packageName, RestoreUiTaskState::Restoring, processed, task.estimatedFiles, detail);
                     continue;
                 }
@@ -1490,7 +1496,16 @@ namespace
         totalFiles = parseLine(L"总文件数:");
         originalRestored = parseLine(L"成功还原:");
 
-        unsigned int finalRestored = originalRestored + (unsigned int)inferenceRestored;
+        // 用磁盘扫描的前后差值计算推理实际新增的文件数
+        // CountPerDirRealNames 统计文件名主干含小写字母的文件（排除纯Hash命名的fallback）
+        unsigned int perDirBefore = 0, perDirAfter = 0;
+        for (const auto& a : beforeDirs) perDirBefore += a.second;
+        for (const auto& a : afterDirs) perDirAfter += a.second;
+        int realInferenceGain = (int)perDirAfter - (int)perDirBefore;
+        if (realInferenceGain < 0) realInferenceGain = 0;
+        if (realInferenceGain > inferenceRestored) realInferenceGain = inferenceRestored;
+        unsigned int finalRestored = originalRestored + (unsigned int)realInferenceGain;
+        if (finalRestored > totalFiles) finalRestored = totalFiles;
         std::wstring finalRate = FormatPercent(finalRestored, totalFiles);
 
         // Update per-directory lines with inference gains
@@ -1533,6 +1548,7 @@ namespace
         newContent += L"\r\n--- 推理补充还原 ---\r\n";
         newContent += L"模式扩展: ";
         bool first = true;
+        int totalGain = 0;
         for (const auto& a : afterDirs) {
             auto b = beforeDirs.find(a.first);
             if (b != beforeDirs.end()) {
@@ -1541,16 +1557,16 @@ namespace
                     if (!first) newContent += L" | ";
                     newContent += a.first + L" +" + std::to_wstring(gain);
                     first = false;
+                    totalGain += gain;
                 }
             }
         }
         newContent += L"\r\n";
-        newContent += L"推理合计: +" + std::to_wstring(inferenceRestored) + L"\r\n";
+        newContent += L"推理合计: +" + std::to_wstring(totalGain) + L"\r\n";
         newContent += L"\r\n=== 最终结果 ===\r\n";
-        // Use actual on-disk count from afterDirs (excludes deleted temp dirs)
-        unsigned int actualFinal = 0;
-        for (const auto& a : afterDirs) actualFinal += a.second;
-        if (actualFinal > 0) finalRestored = actualFinal;
+        // 最终还原数 = 初始还原数 + 推理补充数
+        // 不使用 CountPerDirRealNames 的磁盘扫描结果代替，因为该函数用"文件名含小写字母"
+        // 来推断是否已还原，全大写文件名（如 CG001、TITLE、BGM_01）会被漏计，导致数值偏低。
         if (finalRestored > totalFiles) finalRestored = totalFiles;
         finalRate = FormatPercent(finalRestored, totalFiles);
         newContent += L"最终还原: " + std::to_wstring(finalRestored) + L" / " + std::to_wstring(totalFiles) + L"\r\n";
@@ -1697,6 +1713,8 @@ bool ResourceRestorerLite::RestoreWorkspaceEx(const std::wstring& workspace,
     report += L"缺少目录 Hash: " + std::to_wstring(result.missingDirectoryHash) + L"\r\n";
     report += L"缺少文件名 Hash: " + std::to_wstring(result.missingFileNameHash) + L"\r\n";
     report += L"复制失败: " + std::to_wstring(result.copyFailed) + L"\r\n";
+    if (result.fallbackRestoredFiles > 0)
+        report += L"按后缀名保留（未匹配到文件名）: " + std::to_wstring(result.fallbackRestoredFiles) + L"\r\n";
     report += L"\r\n--- 各目录还原情况 ---\r\n";
     result.packages.clear();
     result.packages.reserve(packageResults.size());
@@ -1773,6 +1791,13 @@ int ResourceRestorerLite::SecondaryInference(const std::wstring& workspace, unsi
     std::wstring reportPath = Combine(restoredOutput, L"RestoreReport.txt");
     AppendInferenceToReport(reportPath, totalRestored, beforeDirs, afterDirs);
 
+    // 用磁盘前后差值计算推理实际新增数（去重后的真实值），返回给 UI 弹窗显示
+    int realGain = 0;
+    for (const auto& a : afterDirs) realGain += (int)a.second;
+    for (const auto& a : beforeDirs) realGain -= (int)a.second;
+    if (realGain < 0) realGain = 0;
+    if (realGain > totalRestored) realGain = totalRestored;
+
     // Clean up _inferred and _inferred_hlog temp directories
     auto RecursiveDelete = [](const std::wstring& rootDir) {
         // Collect all dirs bottom-up using a stack
@@ -1813,5 +1838,5 @@ int ResourceRestorerLite::SecondaryInference(const std::wstring& workspace, unsi
         FindClose(pkgFh);
     }
 
-    return totalRestored;
+    return realGain;
 }

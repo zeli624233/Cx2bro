@@ -1254,9 +1254,9 @@ bool PublisherExtensionBuilderLite::BuildFromGameDirectory(const std::wstring& g
         bool hasNum2 = vp.maxNumber2 > 0 && vp.numberWidth2 > 0;
         std::wstring patternBody;
         if (vp.hasPrefixDirectory)
-            patternBody = hasNum2 ? L"{prefix}\\{prefix}{num2}_{num}{suffix}" : L"{prefix}\\{prefix}{num}{suffix}";
+            patternBody = hasNum2 ? L"{prefix}\\{prefix}{num}_{num2}{suffix}" : L"{prefix}\\{prefix}{num}{suffix}";
         else
-            patternBody = hasNum2 ? L"{prefix}{num2}_{num}{suffix}" : L"{prefix}{num}{suffix}";
+            patternBody = hasNum2 ? L"{prefix}{num}_{num2}{suffix}" : L"{prefix}{num}{suffix}";
 
         rulesPatterns += L"Pattern=" + vp.root + patternBody + vp.extension + L"\r\n";
         rulesPatterns += L"Prefixes=" + JoinCsv(vp.prefixes) + L"\r\n";

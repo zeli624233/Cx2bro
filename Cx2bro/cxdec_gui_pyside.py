@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from PySide6.QtCore import QProcess, QTimer, Qt
-from PySide6.QtGui import QIcon, QPixmap
+from PySide6.QtGui import QBrush, QColor, QIcon, QPixmap
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -164,11 +164,11 @@ HELP_ITEMS: dict[str, list[tuple[str, str]]] = {
         ("打开目录", "打开扩展集根目录或打开当前选中的会社/作品扩展集目录，方便手动检查配置文件和规则文件。"),
         ("在线更新", "检查 GitHub 仓库中是否有新的扩展集。检测到新增扩展集后，勾选并下载即可自动安装到 Extensions 目录。"),
         ("运行环境自检", "检查 core 目录、核心 EXE/DLL、CLI 可用性、Extensions 目录和扩展集数量。启动异常、按钮无反应或核心调用失败时，优先看这里。"),
-        ("扩展集说明", "查看扩展集的用途、推荐目录结构，以及该作扩展集和会社集合扩展集在首页功能中的区别。"),
+        ("扩展集留言", "查看扩展集的用途、推荐目录结构，以及该作扩展集和会社集合扩展集在首页功能中的区别。"),
     ],
     "关于": [
         ("使用帮助", "打开当前三栏帮助窗口。具体功能说明都集中在这里，帮助窗口、首页右侧和关于窗口之间不再重复显示长篇说明。"),
-        ("版本信息", "显示软件名称 Cx2bro、版本号 v1.2.0、运行平台和项目主页。核心用途、主要能力列表也在这里。"),
+        ("版本信息", "显示软件名称 Cx2bro、版本号 v1.3.0、运行平台和项目主页。核心用途、主要能力列表也在这里。"),
         ("作者信息", "维护者 ユイ可愛ね / zeli624233，GitHub 主页和 Cx2bro 项目仓库链接，当前项目主要改进方向以及使用说明。"),
         ("鸣谢 / 许可证", "底层 C++ 代码来源（YeLikesss/KrkrExtractForCxdecV2）、逆向分析参考、AGPL-3.0 许可证说明和免责声明。"),
     ],
@@ -204,6 +204,7 @@ class OnlineUpdateDialog(QDialog):
 
         self.new_checkboxes: list[tuple[str, str, QCheckBox]] = []  # (brand, game, checkbox)
         self.extensions_dir = parent.paths.extensions_dir
+        self._highlighted_data_row = -1
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 10, 12, 10)
@@ -231,6 +232,8 @@ class OnlineUpdateDialog(QDialog):
         self.table.verticalHeader().setVisible(False)
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.table.setSelectionMode(QAbstractItemView.NoSelection)
+        self.table.setFocusPolicy(Qt.NoFocus)
+        self.table.cellClicked.connect(self._on_data_row_clicked)
         self.table.setShowGrid(False)
         layout.addWidget(self.table, 1)
 
@@ -241,26 +244,54 @@ class OnlineUpdateDialog(QDialog):
         self.local_repo_button = QPushButton("打开本地仓库")
         self.local_repo_button.clicked.connect(self.open_local_extensions)
         button_row.addWidget(self.local_repo_button)
-        self.status_indicator = QLabel("")
-        self.status_indicator.setStyleSheet("color: #388E3C; font-weight: bold; font-size: 14px;")
-        button_row.addSpacing(10)
-        button_row.addWidget(self.status_indicator, 1)
-        button_row.addStretch(1)
-        self.timing_label = QLabel("")
-        self.timing_label.setStyleSheet("color: #388E3C; font-weight: bold; font-size: 14px;")
-        button_row.addWidget(self.timing_label)
-        button_row.addSpacing(8)
         self.download_btn = QPushButton("下载选中")
         self.download_btn.setEnabled(False)
         self.download_btn.clicked.connect(self.download_selected)
+        button_row.addWidget(self.download_btn)
         close_btn = QPushButton("关闭")
         close_btn.clicked.connect(self.reject)
-        button_row.addWidget(self.download_btn)
         button_row.addWidget(close_btn)
+        self.clear_btn = QPushButton("清空当前仓库")
+        self.clear_btn.setStyleSheet("QPushButton { color: #D32F2F; }")
+        self.clear_btn.clicked.connect(self.clear_extensions)
+        button_row.addWidget(self.clear_btn)
+        # 右侧状态区：status_indicator + timing_label 贴右
+        button_row.addStretch(1)
+        right_area = QHBoxLayout()
+        right_area.setSpacing(20)
+        right_area.setContentsMargins(0, 0, 0, 0)
+        self.status_indicator = QLabel("")
+        self.status_indicator.setStyleSheet("color: #388E3C; font-weight: bold; font-size: 14px;")
+        right_area.addWidget(self.status_indicator)
+        self.timing_label = QLabel("")
+        self.timing_label.setStyleSheet("color: #388E3C; font-weight: bold; font-size: 14px;")
+        right_area.addWidget(self.timing_label)
+        button_row.addLayout(right_area)
         layout.addLayout(button_row)
 
         # 延迟启动检查，确保对话框先渲染出来
         QTimer.singleShot(100, self.check_updates)
+
+    def _on_data_row_clicked(self, row: int, col: int) -> None:
+        """数据行点击高亮 - 排除 checkbox 行和 section 标题行。"""
+        # 跳过 checkbox 行（有 cellWidget）
+        if self.table.cellWidget(row, 0) is not None:
+            return
+        # 跳过 section 标题行（跨 9 列）
+        if self.table.columnSpan(row, 0) == 9:
+            return
+        # 清除上一行高亮
+        if self._highlighted_data_row >= 0:
+            for c in range(self.table.columnCount()):
+                prev = self.table.item(self._highlighted_data_row, c)
+                if prev is not None:
+                    prev.setBackground(QBrush())
+        # 高亮当前行
+        for c in range(self.table.columnCount()):
+            item = self.table.item(row, c)
+            if item is not None:
+                item.setBackground(QColor("#C8E6C9"))
+        self._highlighted_data_row = row
 
     def check_updates(self) -> None:
         """下载 EXTENSIONS_INDEX.txt，对比本地，显示结果。"""
@@ -413,6 +444,13 @@ class OnlineUpdateDialog(QDialog):
             clayout.addStretch(1)
             self.table.setSpan(row, 0, 1, 9)
             self.table.setCellWidget(row, 0, container)
+            # 手动高亮选中行（NoSelection 模式下通过 checkbox 状态控制背景色）
+            def _update_highlight(checked):
+                container.setStyleSheet(
+                    ".QWidget { background-color: #C8E6C9; }" if checked else ""
+                )
+            cb.toggled.connect(_update_highlight)
+            _update_highlight(cb.isChecked())
             self.new_checkboxes.append((brand, game, cb))
 
         if existing_pairs:
@@ -428,6 +466,24 @@ class OnlineUpdateDialog(QDialog):
     def open_local_extensions(self) -> None:
         """打开本地扩展集目录。"""
         self.workbench.open_path(self.extensions_dir)
+
+    def clear_extensions(self) -> None:
+        """清空当前仓库所有扩展集后刷新页面。"""
+        import shutil
+        if not self.extensions_dir.exists():
+            self.check_updates()
+            return
+        reply = QMessageBox.question(
+            self, "Cx2bro", "确认清空所有扩展集？\n此操作不可撤销！",
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+        )
+        if reply != QMessageBox.Yes:
+            return
+        for brand_dir in self.extensions_dir.iterdir():
+            if brand_dir.is_dir():
+                shutil.rmtree(str(brand_dir), ignore_errors=True)
+        self.status_label.setText("已清空所有扩展集，正在重新获取远程列表…")
+        self.check_updates()
 
     def download_selected(self) -> None:
         """下载用户勾选的扩展集。"""
@@ -572,7 +628,7 @@ class PublisherMetadataDialog(QDialog):
         form.addWidget(self.version_edit, 3, 1)
         form.addWidget(QLabel("日期"), 4, 0)
         form.addWidget(date_widget, 4, 1)
-        form.addWidget(QLabel("扩展集说明"), 5, 0)
+        form.addWidget(QLabel("扩展集留言"), 5, 0)
         form.addWidget(self.summary_edit, 5, 1)
         form.setColumnStretch(1, 1)
         layout.addLayout(form)
@@ -863,8 +919,6 @@ class AboutDialog(QDialog):
                 <li>✅ 运行时密钥提取（Hx/Cx/Verify 三探针 Detours Hook）</li>
                 <li>✅ 批量 XP3 提取（Worker-Watchdog 架构）</li>
                 <li>✅ 扩展集在线更新（GitHub 仓库索引）</li>
-                <li>⬜ 多 XP3 真正并发提取（当前 TVP 运行时限制为单线程）</li>
-                <li>⬜ 扩展集版本更新检测（文件级 SHA 对比）</li>
             </ul>
 
             <div class='box'>
@@ -1876,7 +1930,7 @@ class WorkbenchWindow(QMainWindow):
         toolbar.addWidget(self._button("打开选中扩展集", wrap_with_skip(self.open_selected_extension)), 0, 2)
         toolbar.addWidget(self._button("在线更新", wrap_with_skip(self.check_online_updates)), 1, 0)
         toolbar.addWidget(self._button("运行环境自检", wrap_with_skip(self.show_environment_check)), 1, 1)
-        toolbar.addWidget(self._button("扩展集说明", wrap_with_skip(self.show_extension_description)), 1, 2)
+        toolbar.addWidget(self._button("扩展集留言", wrap_with_skip(self.show_extension_description)), 1, 2)
         for column in range(3):
             toolbar.setColumnStretch(column, 1)
         group_layout.addLayout(toolbar)
@@ -2005,6 +2059,8 @@ class WorkbenchWindow(QMainWindow):
                 font-family: "Microsoft YaHei UI", "Segoe UI";
                 font-size: 12px;
                 color: #111111;
+            }
+            QMainWindow, QDialog {
                 background: #f0f0f0;
             }
             QLabel#appTitle {
@@ -2023,10 +2079,10 @@ class WorkbenchWindow(QMainWindow):
                 border-bottom-color: #f8f8f8;
             }
             QGroupBox {
+                background: #f0f0f0;
                 border: 1px solid #d6d6d6;
                 margin-top: 8px;
                 padding: 8px;
-                background: #f0f0f0;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
@@ -2034,6 +2090,17 @@ class WorkbenchWindow(QMainWindow):
                 padding: 0 4px;
                 font-weight: 600;
                 background: #f0f0f0;
+            }
+            QMenu::item:hover {
+                background: #0078D7;
+                color: #FFFFFF;
+            }
+            QMenuBar::item:hover {
+                background: #0078D7;
+                color: #FFFFFF;
+            }
+            QListWidget::item:hover {
+                background: #e0e0e0;
             }
             QGroupBox#aboutFrame {
                 margin-top: 0px;
@@ -2236,6 +2303,7 @@ class WorkbenchWindow(QMainWindow):
         key_map = {
             "总文件数": "TOTAL_FILES",
             "成功还原": "RESTORED_FILES",
+            "最终还原": "RESTORED_FILES",  # 推理补充后的最终值，出现在"成功还原"之后，优先级覆盖
             "缺少目录 Hash": "MISSING_DIRECTORY_HASH",
             "缺少文件名 Hash": "MISSING_FILE_NAME_HASH",
             "复制失败": "COPY_FAILED",
@@ -2252,7 +2320,11 @@ class WorkbenchWindow(QMainWindow):
             key, value = line.split(":", 1)
             mapped = key_map.get(key.strip())
             if mapped:
-                values[mapped] = value.strip()
+                raw = value.strip()
+                # "最终还原"行格式为 "17316 / 18216"，只取前半部分数字
+                if "/" in raw:
+                    raw = raw.split("/", 1)[0].strip()
+                values[mapped] = raw
         return values
 
     def parse_restore_package_details(self, report: Path) -> list[tuple[str, int, int, str]]:
@@ -2386,7 +2458,7 @@ class WorkbenchWindow(QMainWindow):
                 f"日期：{entry.date or '未填写'}",
                 f"贡献者：{entry.contributor or '未填写'}",
                 f"成功率：{validation.get('success_rate') or '未测试'}",
-                f"说明：{entry.summary or '未填写'}",
+                f"留言：{entry.summary or '未填写'}",
                 f"HashSeed：{entry.hash_seed or '(未设置)'}",
                 f"规则状态：{ready}",
                 f"路径：{entry.path}",
@@ -2486,7 +2558,7 @@ class WorkbenchWindow(QMainWindow):
             [
                 ("功能介绍", ["扩展集是什么", "扩展集用于保存某个会社或某个游戏已经整理好的 Hash、文件名、目录名和规则信息。它的目标是提高 CxdecV2 资源名还原率，避免每次都完全依赖动态 Hash 收集。"]),
                 ("扩展集管理与浏览", ["这里用于查看当前软件已搭载的扩展集。", "左侧选择会社，右侧选择游戏扩展集后，会自动显示扩展集内容、路径、结构和可用状态。"]),
-                ("按钮说明", ["刷新列表：重新扫描 Extensions 目录。", "打开扩展集目录：打开全部扩展集所在目录。", "打开选中扩展集：打开当前选中的会社/游戏扩展集目录。", "在线更新：从 GitHub 仓库检查并下载新增扩展集。", "运行环境自检：检查核心程序、DLL、扩展集目录是否正常。", "扩展集说明：查看扩展集作用和目录结构说明。"]),
+                ("按钮说明", ["刷新列表：重新扫描 Extensions 目录。", "打开扩展集目录：打开全部扩展集所在目录。", "打开选中扩展集：打开当前选中的会社/游戏扩展集目录。", "在线更新：从 GitHub 仓库检查并下载新增扩展集。", "运行环境自检：检查核心程序、DLL、扩展集目录是否正常。", "扩展集留言：查看扩展集作用和目录结构说明。"]),
             ],
         )
 
@@ -2643,6 +2715,8 @@ class WorkbenchWindow(QMainWindow):
                 info["passed_text"] = "通过"
             elif info["passed"] == "no":
                 info["passed_text"] = "未通过"
+            elif info["success_rate"]:
+                info["passed_text"] = "通过"  # 有成功率数据说明已完成测试
         return info
 
     def validation_section_exists(self, path: Path) -> bool:
@@ -2733,7 +2807,7 @@ class WorkbenchWindow(QMainWindow):
                 f"贡献者：{metadata.get('author', '') or '未填写'}",
                 f"版本：{metadata.get('version', '') or '未填写'}",
                 f"日期：{metadata.get('date', '') or '未填写'}",
-                f"说明：{metadata.get('summary', '') or '未填写'}",
+                f"留言：{metadata.get('summary', '') or '未填写'}",
                 f"路径：{path}",
                 f"HashSeed：{hash_seed or '(未设置)'}",
             ]),
@@ -2751,7 +2825,7 @@ class WorkbenchWindow(QMainWindow):
 
     def show_extension_description(self) -> None:
         self.set_info_cards(
-            "扩展集说明",
+            "扩展集留言",
             [
                 ("扩展集是什么", ["扩展集用于保存某个会社或某个游戏已经整理好的 Hash、文件名、目录名和规则信息。", "它的目标是提高 CxdecV2 资源名还原率，避免每次都完全依赖动态 Hash 收集。"]),
                 ("首页中的用途", ["该作扩展集提取：使用 Extensions\\会社\\游戏 下的单个游戏扩展集。", "该会社集合撞新作：只选择会社，合并该会社下所有游戏扩展集，用旧作命名规律去撞新作。", "传统动态模式：不依赖扩展集，先动态提取再动态收集 Hash。"]),
@@ -4897,9 +4971,13 @@ class WorkbenchWindow(QMainWindow):
                     total = int(line.split(":", 1)[1].strip())
                 except ValueError:
                     pass
-            elif line.startswith("成功还原:") or line.startswith("RESTORED_FILES:"):
+            elif line.startswith("成功还原:") or line.startswith("最终还原:") or line.startswith("RESTORED_FILES:"):
                 try:
-                    restored = int(line.split(":", 1)[1].strip())
+                    raw = line.split(":", 1)[1].strip()
+                    # "最终还原"行格式为 "17316 / 18216"，只取前半部分
+                    if "/" in raw:
+                        raw = raw.split("/", 1)[0].strip()
+                    restored = int(raw)
                 except ValueError:
                     pass
         return {"total": total, "restored": restored}

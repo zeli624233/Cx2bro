@@ -18,8 +18,8 @@ namespace
     constexpr bool kDebug = false; // 调试日志开关：false 清除所有 debug_xxx.log 输出
 
     // 扩展集 hash 生成上限
-    constexpr int kEstimateCap = 30000;       // 单 range 预估值上限（之前 150000），避免单前缀展开过万
-    constexpr int kMaxHashEntries = 200000;   // 全局 hash 条目总上限，防止输出文件过大
+    constexpr int kEstimateCap = 100000;      // 单 range 预估值上限（原3000000，30k时数2上限~48，100k时~162）
+    constexpr int kMaxHashEntries = 500000;   // 全局 hash 条目总上限（原3000000，兼顾速度与覆盖率）
 
     std::wstring g_DebugDir;
     void SetDebugDir(const std::wstring& dir) { g_DebugDir = dir; }
@@ -770,10 +770,10 @@ namespace
         auto emitPath = [&](const std::wstring& p) -> bool
         {
             if (!onPath(p)) return false;
-            if (pathPattern.pattern.find(L"{num2}") != std::wstring::npos)
-            {
-                if (!onPath(p + L".sli")) return false;
-            }
+            // 为每条生成路径同时生成 .sli 伴侣条目（语音/BGM等的配对描述文件）
+            // 此前只在 {num2} 模式生成，但 {num} 单编号模式也需要
+            // 注意：游戏中的 .sli 文件名是 xxx.ogg.sli（保留原扩展名再加 .sli），所以 p + L".sli" 是正确行为
+            if (!onPath(p + L".sli")) return false;
             return true;
         };
 
@@ -781,39 +781,58 @@ namespace
         {
             WriteDebug(L"[HashGen] AddPatternPaths: prefixRanges path, " +
                        std::to_wstring((unsigned int)pathPattern.prefixRanges.size()) + L" ranges");
-            int rangeIdx = 0;
+
+            // Phase 1: 收集所有前缀的元数据，预计算 number2Max（原 number==0 时的缩减逻辑）
+            struct RangeInfo {
+                const RuleSet::PrefixRange* range;
+                int number2Max;
+                int number2Start;
+            };
+            std::vector<RangeInfo> ranges;
+            int globalMaxNumber = 0;
             for (const auto& range : pathPattern.prefixRanges)
             {
-                ++rangeIdx;
                 if (range.prefix.empty() || range.maxNumber <= 0) continue;
                 int number2Max = Number2MaxForPrefix(pathPattern, range.prefix);
-                WriteDebug(L"[HashGen] AddPatternPaths: range#" + std::to_wstring(rangeIdx) +
-                           L" prefix=" + range.prefix + L", maxNumber=" + std::to_wstring(range.maxNumber) +
-                           L", number2Max(raw)=" + std::to_wstring(number2Max));
-                int localMax = 0;
-                for (int number = 0; number <= range.maxNumber; ++number)
+                // 自动缩减：与原来 number==0 时的逻辑相同
+                if (number2Max > 0)
                 {
-                    wchar_t numberText[32]{};
-                    swprintf_s(numberText, L"%0*d", pathPattern.numberWidth, number);
-                    // 自动缩减：预估路径数 > 15 万时减小 num2 上限
-                    if (number2Max > 0 && number == 0)
+                    unsigned int suffixCountForEstimate = 0;
+                    for (const auto& s : pathPattern.suffixes)
+                        if (s.empty()) ++suffixCountForEstimate;
+                    if (suffixCountForEstimate == 0) suffixCountForEstimate = 1;
+                    uint64_t estimate = (uint64_t)(range.maxNumber + 1) * (uint64_t)(number2Max + 1) * (uint64_t)suffixCountForEstimate;
+                    if (estimate > kEstimateCap)
                     {
-                        uint64_t estimate = (uint64_t)(range.maxNumber + 1) * (uint64_t)(number2Max + 1) * (uint64_t)pathPattern.suffixes.size();
-                        if (pathPattern.pattern.find(L"{num2}") != std::wstring::npos)
-                            estimate *= 2;
-                        if (estimate > kEstimateCap)
-                        {
-                            uint64_t reduced = kEstimateCap / ((uint64_t)(range.maxNumber + 1) * (uint64_t)pathPattern.suffixes.size());
-                            if (pathPattern.pattern.find(L"{num2}") != std::wstring::npos)
-                                reduced /= 2;
-                            if (reduced < (uint64_t)number2Max)
-                                number2Max = (int)reduced;
-                            WriteDebug(L"[HashGen] AddPatternPaths: range#" + std::to_wstring(rangeIdx) +
-                                       L" reduced number2Max to " + std::to_wstring(number2Max) +
-                                       L" (estimate=" + std::to_wstring(estimate) + L")");
-                        }
+                        uint64_t reduced = kEstimateCap / ((uint64_t)(range.maxNumber + 1) * (uint64_t)suffixCountForEstimate);
+                        if (reduced < (uint64_t)number2Max)
+                            number2Max = (int)reduced;
                     }
-                    int number2Start = number2Max >= 0 ? 0 : -1;
+                }
+                RangeInfo info{ &range, number2Max, number2Max >= 0 ? 0 : -1 };
+                ranges.push_back(info);
+                if (range.maxNumber > globalMaxNumber)
+                    globalMaxNumber = range.maxNumber;
+            }
+
+            if (ranges.empty())
+            {
+                WriteDebug(L"[HashGen] AddPatternPaths: EXIT (no valid ranges)");
+                return;
+            }
+
+            // Phase 2: 按 num 优先遍历，让所有前缀共享 cap 配额
+            // 外循环 = num（所有前缀共享），内循环 = 前缀
+            // 这样每个前缀至少覆盖到前 N 个编号，而不是一个前缀吃光 cap
+            for (int number = 0; number <= globalMaxNumber; ++number)
+            {
+                wchar_t numberText[32]{};
+                swprintf_s(numberText, L"%0*d", pathPattern.numberWidth, number);
+                for (auto& ri : ranges)
+                {
+                    if (number > ri.range->maxNumber) continue;
+                    int number2Max = ri.number2Max;
+                    int number2Start = ri.number2Start;
                     for (int number2 = number2Start; number2 <= number2Max; ++number2)
                     {
                         wchar_t numberText2[32]{};
@@ -821,19 +840,16 @@ namespace
                         for (const auto& suffix : pathPattern.suffixes)
                         {
                             std::wstring path = pathPattern.pattern;
-                            path = ReplaceAll(path, L"{prefix}", range.prefix);
+                            path = ReplaceAll(path, L"{prefix}", ri.range->prefix);
                             path = ReplaceAll(path, L"{num}", numberText);
                             path = ReplaceAll(path, L"{num2}", number2 >= 0 ? numberText2 : L"");
                             path = ReplaceAll(path, L"{suffix}", suffix);
                             if (!emitPath(path)) return;
-                            ++localMax;
                         }
                     }
                 }
-                WriteDebug(L"[HashGen] AddPatternPaths: range#" + std::to_wstring(rangeIdx) +
-                           L" done, generated=" + std::to_wstring(localMax) + L" paths");
             }
-            WriteDebug(L"[HashGen] AddPatternPaths: EXIT (prefixRanges path)");
+            WriteDebug(L"[HashGen] AddPatternPaths: EXIT (prefixRanges path, round-robin)");
             return;
         }
 
@@ -845,34 +861,50 @@ namespace
 
         WriteDebug(L"[HashGen] AddPatternPaths: prefixes path, " +
                    std::to_wstring((unsigned int)pathPattern.prefixes.size()) + L" prefixes");
-        int prefixIdx = 0;
+
+        // Phase 1: 预计算每个前缀的 number2Max
+        struct PrefixInfo {
+            std::wstring prefix;
+            int number2Max;
+            int number2Start;
+        };
+        std::vector<PrefixInfo> pInfos;
         for (const auto& prefix : pathPattern.prefixes)
         {
-            ++prefixIdx;
             if (prefix.empty()) continue;
             int number2Max = Number2MaxForPrefix(pathPattern, prefix);
-            WriteDebug(L"[HashGen] AddPatternPaths: prefix#" + std::to_wstring(prefixIdx) +
-                       L" prefix=" + prefix + L", maxNumber=" + std::to_wstring(pathPattern.maxNumber) +
-                       L", number2Max(raw)=" + std::to_wstring(number2Max));
-            int localMax = 0;
-            for (int number = 0; number <= pathPattern.maxNumber; ++number)
+            if (number2Max > 0)
             {
-                wchar_t numberText[32]{};
-                swprintf_s(numberText, L"%0*d", pathPattern.numberWidth, number);
-                if (number2Max > 0 && number == 0)
+                unsigned int suffixCountForEstimate = 0;
+                for (const auto& s : pathPattern.suffixes)
+                    if (s.empty()) ++suffixCountForEstimate;
+                if (suffixCountForEstimate == 0) suffixCountForEstimate = 1;
+                uint64_t estimate = (uint64_t)(pathPattern.maxNumber + 1) * (uint64_t)(number2Max + 1) * (uint64_t)suffixCountForEstimate;
+                if (estimate > kEstimateCap)
                 {
-                    uint64_t estimate = (uint64_t)(pathPattern.maxNumber + 1) * (uint64_t)(number2Max + 1) * (uint64_t)pathPattern.suffixes.size();
-                    if (pathPattern.pattern.find(L"{num2}") != std::wstring::npos) estimate *= 2;
-                    if (estimate > kEstimateCap)
-                    {
-                        uint64_t reduced = kEstimateCap / ((uint64_t)(pathPattern.maxNumber + 1) * (uint64_t)pathPattern.suffixes.size());
-                        if (pathPattern.pattern.find(L"{num2}") != std::wstring::npos) reduced /= 2;
-                        if (reduced < (uint64_t)number2Max) number2Max = (int)reduced;
-                        WriteDebug(L"[HashGen] AddPatternPaths: prefix#" + std::to_wstring(prefixIdx) +
-                                   L" reduced number2Max to " + std::to_wstring(number2Max));
-                    }
+                    uint64_t reduced = kEstimateCap / ((uint64_t)(pathPattern.maxNumber + 1) * (uint64_t)suffixCountForEstimate);
+                    if (reduced < (uint64_t)number2Max) number2Max = (int)reduced;
                 }
-                int number2Start = number2Max >= 0 ? 0 : -1;
+            }
+            PrefixInfo pi{ prefix, number2Max, number2Max >= 0 ? 0 : -1 };
+            pInfos.push_back(pi);
+        }
+
+        if (pInfos.empty())
+        {
+            WriteDebug(L"[HashGen] AddPatternPaths: EXIT (no valid prefixes)");
+            return;
+        }
+
+        // Phase 2: 按 num 优先遍历，轮询所有前缀
+        for (int number = 0; number <= pathPattern.maxNumber; ++number)
+        {
+            wchar_t numberText[32]{};
+            swprintf_s(numberText, L"%0*d", pathPattern.numberWidth, number);
+            for (auto& pi : pInfos)
+            {
+                int number2Max = pi.number2Max;
+                int number2Start = pi.number2Start;
                 for (int number2 = number2Start; number2 <= number2Max; ++number2)
                 {
                     wchar_t numberText2[32]{};
@@ -880,19 +912,16 @@ namespace
                     for (const auto& suffix : pathPattern.suffixes)
                     {
                         std::wstring path = pathPattern.pattern;
-                        path = ReplaceAll(path, L"{prefix}", prefix);
+                        path = ReplaceAll(path, L"{prefix}", pi.prefix);
                         path = ReplaceAll(path, L"{num}", numberText);
                         path = ReplaceAll(path, L"{num2}", number2 >= 0 ? numberText2 : L"");
                         path = ReplaceAll(path, L"{suffix}", suffix);
                         if (!emitPath(path)) return;
-                        ++localMax;
                     }
                 }
             }
-            WriteDebug(L"[HashGen] AddPatternPaths: prefix#" + std::to_wstring(prefixIdx) +
-                       L" done, generated=" + std::to_wstring(localMax) + L" paths");
         }
-        WriteDebug(L"[HashGen] AddPatternPaths: EXIT (prefixes path)");
+        WriteDebug(L"[HashGen] AddPatternPaths: EXIT (prefixes path, round-robin)");
     }
 
     void AddRuleSetPaths(const RuleSet& ruleSet,
@@ -907,7 +936,8 @@ namespace
     bool GenerateFromRuleSets(const std::vector<RuleSet>& ruleSets,
                               const std::wstring& outputDirectory,
                               StaticHashGeneratorLite::Result& result,
-                              std::wstring& errorMessage)
+                              std::wstring& errorMessage,
+                              const std::set<std::wstring>* knownFileNames = nullptr)
     {
         result = StaticHashGeneratorLite::Result{};
         WriteDebug(L"[HashGen] GenerateFromRuleSets: START, ruleSets=" +
@@ -945,6 +975,20 @@ namespace
 
         // 去重集合（仅用于统计）
         std::set<std::wstring> dirSet, fileSet;
+        // 预置已知文件名（来自数据源的 Restored_Extractor_Output）
+        // Pattern 展开时会遍历大量不存在的文件名组合，浪费 cap 配额。
+        // 预置已知文件名让 Pattern 展开时跳过已存在文件（onPath 的 fileSet.insert 返回 false 时不写入），
+        // 同时为每个已知文件名直接写入 hash 条目，不依赖 Pattern 展开。
+        if (knownFileNames && fileOk)
+        {
+            for (const auto& kf : *knownFileNames)
+            {
+                fileSet.insert(kf);
+                std::wstring line = kf + HashLogSplit + FileNameHash(kf, seed) + L"\r\n";
+                DWORD w; WriteFile(hFileLog, line.c_str(), (DWORD)(line.size() * 2), &w, nullptr);
+                ++result.fileNameHashCount;
+            }
+        }
 
         // 路径回调：每一条路径立即拆目录→算 hash→写文件，不缓存
         int callbackCount = 0;
@@ -994,15 +1038,21 @@ namespace
                        L", inputFiles=" + std::to_wstring((unsigned int)rs.inputFileNames.size()) +
                        L", inputDirs=" + std::to_wstring((unsigned int)rs.inputDirectoryNames.size()));
             callbackCount = 0;
+            // 先处理具体路径（inputResourcePaths），确保数据源的确切文件优先写入 hash 表
+            // Pattern 展开量巨大（92 prefixes × 613 num × 9999 num2 × 9 suffix × 2 = 千亿级），
+            // 会迅速耗尽 cap 导致后续 prefix 和 inputResourcePaths 全被跳过。
+            // 必须先写具体路径，再用剩余 cap 做 Pattern 展开。
+            int pathCount = 0;
+            for (const auto& rp : rs.inputResourcePaths) { if (!onPath(rp)) break; ++pathCount; }
+            WriteDebug(L"[HashGen] GenerateFromRuleSets: inputResourcePaths fed=" + std::to_wstring(pathCount) +
+                       L", now dirHashes=" + std::to_wstring(result.directoryHashCount) +
+                       L", fileHashes=" + std::to_wstring(result.fileNameHashCount));
             WriteDebug(L"[HashGen] GenerateFromRuleSets: Calling AddRuleSetPaths...");
             AddRuleSetPaths(rs, onPath);
             WriteDebug(L"[HashGen] GenerateFromRuleSets: AddRuleSetPaths done, callbacks=" +
                        std::to_wstring(callbackCount) +
                        L", now dirHashes=" + std::to_wstring(result.directoryHashCount) +
                        L", fileHashes=" + std::to_wstring(result.fileNameHashCount));
-            int pathCount = 0;
-            for (const auto& rp : rs.inputResourcePaths) { if (!onPath(rp)) break; ++pathCount; }
-            WriteDebug(L"[HashGen] GenerateFromRuleSets: inputResourcePaths fed=" + std::to_wstring(pathCount));
             for (const auto& fn : rs.inputFileNames) fileSet.insert(fn);
             for (const auto& dn : rs.inputDirectoryNames) dirSet.insert(dn);
         }
@@ -1020,6 +1070,48 @@ namespace
         }
         WriteDebug(L"[HashGen] GenerateFromRuleSets: Supplementary writes done, fileEntries=" +
                    std::to_wstring(suppFileCount) + L", dirEntries=" + std::to_wstring(suppDirCount));
+
+        // 补充写入 .sli 伴侣条目（不受 cap 限制）
+        // 从所有 RuleSet 的 inputResourcePaths（FrontCodedPaths）和 inputFileNames（|F|）中
+        // 为每个 base 文件名生成 .sli 伴侣 hash。已在 fileSet 中的（来自 Pattern 的 emitPath）跳过。
+        int sliCompanionCount = 0;
+        if (fileOk)
+        {
+            for (const auto& rs : ruleSets)
+            {
+                if (rs.seed != seed) continue;
+                // 处理 inputResourcePaths（完整路径→提取文件名→加.sli）
+                for (const auto& path : rs.inputResourcePaths)
+                {
+                    size_t split = path.find_last_of(L"\\/");
+                    std::wstring fname = (split == std::wstring::npos) ? path : path.substr(split + 1);
+                    std::wstring sliName = fname + L".sli";
+                    if (fileSet.find(sliName) == fileSet.end())
+                    {
+                        fileSet.insert(sliName);
+                        std::wstring line = sliName + HashLogSplit + FileNameHash(sliName, seed) + L"\r\n";
+                        DWORD w; WriteFile(hFileLog, line.c_str(), (DWORD)(line.size() * 2), &w, nullptr);
+                        ++result.fileNameHashCount;
+                        ++sliCompanionCount;
+                    }
+                }
+                // 处理 inputFileNames（|F| 条目，直接是文件名→加.sli）
+                for (const auto& fn : rs.inputFileNames)
+                {
+                    std::wstring sliName = fn + L".sli";
+                    if (fileSet.find(sliName) == fileSet.end())
+                    {
+                        fileSet.insert(sliName);
+                        std::wstring line = sliName + HashLogSplit + FileNameHash(sliName, seed) + L"\r\n";
+                        DWORD w; WriteFile(hFileLog, line.c_str(), (DWORD)(line.size() * 2), &w, nullptr);
+                        ++result.fileNameHashCount;
+                        ++sliCompanionCount;
+                    }
+                }
+            }
+        }
+        WriteDebug(L"[HashGen] GenerateFromRuleSets: .sli companion writes done, count=" +
+                   std::to_wstring(sliCompanionCount));
 
         if (dirOk) CloseHandle(hDirLog);
         if (fileOk) CloseHandle(hFileLog);
@@ -1080,7 +1172,8 @@ bool StaticHashGeneratorLite::GenerateFromExtension(const std::wstring& extensio
                L", seed=" + ruleSet.seed);
 
     WriteDebug(L"[HashGen] Calling GenerateFromRuleSets...");
-    bool genOk = GenerateFromRuleSets(std::vector<RuleSet>{ ruleSet }, outputDirectory, result, errorMessage);
+    bool genOk = GenerateFromRuleSets(std::vector<RuleSet>{ ruleSet }, outputDirectory, result, errorMessage,
+                                      m_knownFileNames.empty() ? nullptr : &m_knownFileNames);
     WriteDebug(L"[HashGen] GenerateFromRuleSets returned: " + std::wstring(genOk ? L"OK" : L"FAIL") +
                L", paths=" + std::to_wstring(result.resourcePathCount) +
                L", dirHashes=" + std::to_wstring(result.directoryHashCount) +
